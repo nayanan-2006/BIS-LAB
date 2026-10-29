@@ -144,6 +144,7 @@ def main():
     plt.legend()
     plt.tight_layout()
     plt.show()
+    print("name : Nayana N \n USN 1WN24CS171")
 
 
 if __name__ == '__main__':

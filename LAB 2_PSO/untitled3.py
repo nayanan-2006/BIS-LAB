@@ -611,6 +611,7 @@ for lot in range(NUM_PARKING_LOTS):
         f"Parking Lot {lot + 1}: "
         f"{occupied}/{parking_capacity[lot]}"
     )
+    print("name : Nayana N \n USN 1WN24CS171")
 
 
 # ============================================================
