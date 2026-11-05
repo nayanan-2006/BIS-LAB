@@ -1,0 +1,165 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import (
+    Input,
+    Conv2D,
+    MaxPooling2D,
+    GlobalAveragePooling2D,
+    Dense,
+    Dropout
+)
+from tensorflow.keras.optimizers import Adam
+
+# ---------------------------------------
+# STEP 1: PREPARE THE DATA
+# ---------------------------------------
+
+# Convert images into float values between 0 and 1
+X_train = X_train.astype("float32") / 255.0
+X_val = X_val.astype("float32") / 255.0
+X_test = X_test.astype("float32") / 255.0
+
+# Add channel dimension for grayscale images
+X_train = np.expand_dims(X_train, axis=-1)
+X_val = np.expand_dims(X_val, axis=-1)
+X_test = np.expand_dims(X_test, axis=-1)
+
+# Convert labels into 1D arrays
+y_train = y_train.reshape(-1)
+y_val = y_val.reshape(-1)
+y_test = y_test.reshape(-1)
+
+print("Training shape:", X_train.shape)
+print("Validation shape:", X_val.shape)
+print("Testing shape:", X_test.shape)
+
+
+# ---------------------------------------
+# STEP 2: BUILD CNN MODEL
+# ---------------------------------------
+
+input_layer = Input(shape=(128, 128, 1))
+
+# First convolution block
+x = Conv2D(32, (3, 3), activation="relu", padding="same")(input_layer)
+x = MaxPooling2D((2, 2))(x)
+
+# Second convolution block
+x = Conv2D(64, (3, 3), activation="relu", padding="same")(x)
+x = MaxPooling2D((2, 2))(x)
+
+# Third convolution block
+x = Conv2D(128, (3, 3), activation="relu", padding="same")(x)
+x = MaxPooling2D((2, 2))(x)
+
+# Feature extraction layer
+features = GlobalAveragePooling2D(name="feature_layer")(x)
+
+# Classification layers
+x = Dense(64, activation="relu")(features)
+x = Dropout(0.3)(x)
+
+output_layer = Dense(1, activation="sigmoid")(x)
+
+cnn_model = Model(inputs=input_layer, outputs=output_layer)
+
+# ---------------------------------------
+# STEP 3: COMPILE CNN
+# ---------------------------------------
+
+cnn_model.compile(
+    optimizer=Adam(learning_rate=0.001),
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+cnn_model.summary()
+
+
+# ---------------------------------------
+# STEP 4: TRAIN CNN
+# ---------------------------------------
+
+history = cnn_model.fit(
+    X_train,
+    y_train,
+    validation_data=(X_val, y_val),
+    epochs=10,
+    batch_size=32
+)
+
+
+# ---------------------------------------
+# STEP 5: EVALUATE CNN
+# ---------------------------------------
+
+loss, accuracy = cnn_model.evaluate(X_test, y_test)
+
+print("\nCNN Test Accuracy:", accuracy * 100)
+print("CNN Test Loss:", loss)
+
+
+# ---------------------------------------
+# STEP 6: EXTRACT FEATURES
+# ---------------------------------------
+
+feature_extractor = Model(
+    inputs=cnn_model.input,
+    outputs=cnn_model.get_layer("feature_layer").output
+)
+
+train_features = feature_extractor.predict(X_train)
+val_features = feature_extractor.predict(X_val)
+test_features = feature_extractor.predict(X_test)
+
+print("\nExtracted Feature Shapes:")
+print("Training features:", train_features.shape)
+print("Validation features:", val_features.shape)
+print("Testing features:", test_features.shape)
+
+
+# ---------------------------------------
+# STEP 7: SAVE EXTRACTED FEATURES
+# ---------------------------------------
+
+np.savez(
+    "cnn_extracted_features.npz",
+    train_features=train_features,
+    val_features=val_features,
+    test_features=test_features,
+    y_train=y_train,
+    y_val=y_val,
+    y_test=y_test
+)
+
+print("\nCNN feature extraction completed!")
+print("Features saved successfully.")
+
+
+# ---------------------------------------
+# STEP 8: VISUALIZE TRAINING
+# ---------------------------------------
+
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.plot(history.history["accuracy"], label="Training Accuracy")
+plt.plot(history.history["val_accuracy"], label="Validation Accuracy")
+plt.title("CNN Accuracy")
+plt.xlabel("Epochs")
+plt.ylabel("Accuracy")
+plt.legend()
+
+plt.subplot(1, 2, 2)
+plt.plot(history.history["loss"], label="Training Loss")
+plt.plot(history.history["val_loss"], label="Validation Loss")
+plt.title("CNN Loss")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.legend()
+
+plt.tight_layout()
+plt.show()

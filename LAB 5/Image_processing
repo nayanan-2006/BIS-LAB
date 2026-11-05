@@ -1,0 +1,61 @@
+
+import numpy as np
+import matplotlib.pyplot as plt
+import medmnist
+
+from medmnist import PneumoniaMNIST
+
+# Download training dataset
+train_data = PneumoniaMNIST(
+    split="train",
+    download=True,
+    size=128
+)
+
+val_data = PneumoniaMNIST(
+    split="val",
+    download=True,
+    size=128
+)
+
+test_data = PneumoniaMNIST(
+    split="test",
+    download=True,
+    size=128
+)
+
+X_train = train_data.imgs
+y_train = train_data.labels
+
+X_val = val_data.imgs
+y_val = val_data.labels
+
+X_test = test_data.imgs
+y_test = test_data.labels
+print("\n Nayana N\n 1WN24CS171\n")
+print("Training images:", X_train.shape)
+print("Training labels:", y_train.shape)
+
+print("Validation images:", X_val.shape)
+print("Testing images:", X_test.shape)
+
+# Display sample images
+import random
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(12, 8))
+
+indices = random.sample(range(len(X_train)), 8)
+
+for i, idx in enumerate(indices):
+    plt.subplot(2, 4, i + 1)
+
+    plt.imshow(X_train[idx], cmap="gray")
+
+    label = "Pneumonia" if int(y_train[idx][0]) == 1 else "Normal"
+
+    plt.title(label)
+    plt.axis("off")
+
+plt.tight_layout()
+plt.show()
